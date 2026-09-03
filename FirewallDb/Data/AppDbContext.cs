@@ -1,7 +1,7 @@
 using FirewallDb.Models;
 using Microsoft.EntityFrameworkCore;
 
-namespace FirewallDd.Data;
+namespace FirewallDb.Data;
 
 public class AppDbContext : DbContext 
     
