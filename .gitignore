@@ -1,0 +1,29 @@
+﻿# .NET
+bin/
+obj/
+*.user
+*.suo
+*.userprefs
+*.sln.ide
+*.db
+*.log
+*.tmp
+*.cache
+*.pdb
+*.dll
+*.exe
+packages/
+.vs/
+
+# Docker
+*.dockerignore
+*.dockerfile
+
+# Visual Studio
+*.vs/
+*.vsp
+*.vspx
+
+# OS junk
+Thumbs.db
+.DS_Store
