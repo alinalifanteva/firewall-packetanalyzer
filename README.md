@@ -10,6 +10,7 @@
 - 🐳 **Docker-деплоймент** с правами `NET_ADMIN`
 
 ## 📂 Структура проекта
+```
 firewall-packetanalyzer/
 ├── FirewallApi/                     # Web API
 │   ├── Controllers/                 # RulesController
@@ -25,6 +26,7 @@ firewall-packetanalyzer/
 ├── docker-compose.yml
 ├── README.md
 └── .gitignore
+```
 
 ## 🧠 Логика приоритетов
 
@@ -51,7 +53,7 @@ firewall-packetanalyzer/
 | GET    | `/api/Rules/metrics`        | Метрики (кол-во правил, ALLOW/DENY, uptime, CPU, RAM) |
 **Важно**: при создании/обновлении/удалении правила автоматически пересортировываются по `Priority`.
 
-🐳 Запуск в Docker
+## 🐳 Запуск в Docker
 # Сборка образа
 docker build -t firewall-api .
 # Запуск с правами NET_ADMIN
