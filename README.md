@@ -24,6 +24,7 @@ firewall-packetanalyzer/
 ├── docker-compose.yml
 ├── README.md
 └── .gitignore
+```bash
 
 Запуск в Docker
 # Сборка образа
