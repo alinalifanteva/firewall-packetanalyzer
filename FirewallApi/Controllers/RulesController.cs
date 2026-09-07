@@ -40,14 +40,9 @@ public class RulesController : ControllerBase // базовый контролл
         // 1. Сохраняем в БД
         _context.Rules.Add(rule);
         await _context.SaveChangesAsync();
-
+        var rules = await _context.Rules.OrderBy(r => r.Priority).ToListAsync(); // все поавила по приоритету
         // 2. Применяем в iptables (если правило активно)
-        await _iptablesService.AddRuleAsync(
-            rule.Ip ?? "0.0.0.0/0",
-            rule.PortStart ?? 0,
-            rule.Protocol.ToString().ToLower(),
-            rule.Action.ToString()
-        );
+        await _iptablesService.SyncRulesAsync(rules); // апитайблес с бд
 
         // 3. Возвращаем ответ
         return CreatedAtAction(nameof(GetRules), new { id = rule.Id }, rule);
@@ -89,13 +84,6 @@ public class RulesController : ControllerBase // базовый контролл
         var existingRule = await _context.Rules.FindAsync(id);
         if (existingRule == null)
             return NotFound($"Rule with ID {id} not found");
-        
-        await _iptablesService.RemoveRuleAsync(
-        existingRule.Ip ?? "0.0.0.0/0",
-        existingRule.PortStart ?? 0,
-        existingRule.Protocol.ToString().ToLower(),
-        existingRule.Action.ToString() // передаём действие (ALLOW/DENY) для правильного target
-        );
 
         existingRule.Priority = updatedRule.Priority;
         existingRule.Action = updatedRule.Action;
@@ -109,12 +97,9 @@ public class RulesController : ControllerBase // базовый контролл
 
         await _context.SaveChangesAsync();
 
-        await _iptablesService.AddRuleAsync(
-        existingRule.Ip ?? "0.0.0.0/0",
-        existingRule.PortStart ?? 0,
-        existingRule.Protocol.ToString().ToLower(),
-        existingRule.Action.ToString()
-            );
+        var rules = await _context.Rules.OrderBy(r => r.Priority).ToListAsync();
+        await _iptablesService.SyncRulesAsync(rules);
+         
         return Ok(existingRule);
     }
 
@@ -125,14 +110,12 @@ public class RulesController : ControllerBase // базовый контролл
         if (rule == null)
             return NotFound($"Rule with ID {id} not found");
 
-        await _iptablesService.RemoveRuleAsync(
-        rule.Ip ?? "0.0.0.0/0",
-        rule.PortStart ?? 0,
-        rule.Protocol.ToString().ToLower(),
-        rule.Action.ToString());
-
         _context.Rules.Remove(rule);
         await _context.SaveChangesAsync();
+
+        var rules = await _context.Rules.OrderBy(r => r.Priority).ToListAsync();
+        await _iptablesService.SyncRulesAsync(rules);
+
         return NoContent();
     }
 
@@ -143,17 +126,11 @@ public class RulesController : ControllerBase // базовый контролл
 
         rule.Action = RuleAction.ALLOW;
 
-        // Сначала применяем в iptables
-        await _iptablesService.AddRuleAsync(
-            rule.Ip ?? "0.0.0.0/0",
-            rule.PortStart ?? 0,
-            rule.Protocol.ToString().ToLower(),
-            rule.Action.ToString()
-        );
-
-        // Потом сохраняем в БД
         _context.Rules.Add(rule);
         await _context.SaveChangesAsync();
+
+        var rules = await _context.Rules.OrderBy(r => r.Priority).ToListAsync();
+        await _iptablesService.SyncRulesAsync(rules);
 
         return CreatedAtAction(nameof(GetRule), new { id = rule.Id }, rule);
     }
@@ -165,15 +142,11 @@ public class RulesController : ControllerBase // базовый контролл
 
         rule.Action = RuleAction.DENY;
 
-        await _iptablesService.AddRuleAsync(
-            rule.Ip ?? "0.0.0.0/0",
-            rule.PortStart ?? 0,
-            rule.Protocol.ToString().ToLower(),
-            rule.Action.ToString()
-        );
-
         _context.Rules.Add(rule);
         await _context.SaveChangesAsync();
+
+        var rules = await _context.Rules.OrderBy(r => r.Priority).ToListAsync();
+        await _iptablesService.SyncRulesAsync(rules);
 
         return CreatedAtAction(nameof(GetRule), new { id = rule.Id }, rule);
     }
