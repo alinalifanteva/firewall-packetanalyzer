@@ -1,0 +1,78 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: firewalldb
+    ports:
+      - '5433:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - firewall-net
+
+  api:
+    build: .
+    ports:
+      - '5087:80'
+    cap_add:
+      - NET_ADMIN
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Host=db;Port=5432;Database=firewalldb;Username=postgres;Password=postgres
+    depends_on:
+      - db
+    networks:
+      - firewall-net
+
+  client:
+    image: alpine:latest
+    command: tail -f /dev/null
+    networks:
+      - firewall-net
+    depends_on:
+      - api
+
+  server:
+    image: node:18-alpine
+    working_dir: /app
+    command: sh -c "npm init -y && npm install express && node server.js"
+    volumes:
+      - ./server:/app
+    ports:
+      - '3000:3000'
+    networks:
+      - firewall-net
+    depends_on:
+      - api
+
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - '9090:9090'
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    networks:
+      - firewall-net
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - '3001:3000'
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    networks:
+      - firewall-net
+    volumes:
+      - grafana_data:/var/lib/grafana
+
+volumes:
+  postgres_data:
+  grafana_data:
+
+networks:
+  firewall-net:
+    driver: bridge

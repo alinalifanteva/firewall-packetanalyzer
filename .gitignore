@@ -27,3 +27,5 @@ packages/
 # OS junk
 Thumbs.db
 .DS_Store
+
+server/node_modules/
