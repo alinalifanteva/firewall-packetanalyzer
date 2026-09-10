@@ -12,14 +12,13 @@ namespace FirewallApi.Controllers;
 public class RulesController : ControllerBase // базовый контроллер для работы с апи
 {
     private readonly AppDbContext _context; // приватный контекст
-    private readonly DateTime _startTime;
+    private static readonly DateTime _startTime = DateTime.UtcNow;
     private readonly IptablesService _iptablesService;
 
     public RulesController(AppDbContext context, IptablesService iptablesService)
     {
         _context = context;
         _iptablesService = iptablesService;
-        _startTime = DateTime.UtcNow;
     }
 
     //get api/rules асинхронный для работы с бд
@@ -156,8 +155,44 @@ public class RulesController : ControllerBase // базовый контролл
         var process = Process.GetCurrentProcess();
         var cpuTime = process.TotalProcessorTime.TotalSeconds;
         var elapsedTime = (DateTime.UtcNow - _startTime).TotalSeconds;
-        double cpuUsage = elapsedTime > 0 ? (cpuTime / elapsedTime) * 100 : 0;
+        double cpuUsage = elapsedTime > 0
+        ? (cpuTime / (elapsedTime * Environment.ProcessorCount)) * 100
+        : 0;
+
         double ramUsageMB = process.WorkingSet64 / (1024.0 * 1024.0);
         return (Math.Round(cpuUsage, 2), Math.Round(ramUsageMB, 2));
     }
+
+    [HttpGet("/metrics")] // формат для прометеуса, эндпоинт для метрик в правильном формате
+    public async Task<IActionResult> PrometheusMetrics()
+    {
+        var total = await _context.Rules.CountAsync();
+        var allowCount = await _context.Rules.CountAsync(r => r.Action == RuleAction.ALLOW);
+        var denyCount = await _context.Rules.CountAsync(r => r.Action == RuleAction.DENY);
+        var (cpuUsage, ramUsageMB) = GetSystemMetrics();
+        var uptime = (DateTime.UtcNow - _startTime).TotalSeconds;
+
+        var sb = new System.Text.StringBuilder();
+        sb.AppendLine("# HELP total_rules Total number of rules");
+        sb.AppendLine("# TYPE total_rules gauge");
+        sb.AppendLine($"total_rules {total}");
+        sb.AppendLine("# HELP allow_rules Number of ALLOW rules");
+        sb.AppendLine("# TYPE allow_rules gauge");
+        sb.AppendLine($"allow_rules {allowCount}");
+        sb.AppendLine("# HELP deny_rules Number of DENY rules");
+        sb.AppendLine("# TYPE deny_rules gauge");
+        sb.AppendLine($"deny_rules {denyCount}");
+        sb.AppendLine("# HELP cpu_usage_percent CPU usage in percent");
+        sb.AppendLine("# TYPE cpu_usage_percent gauge");
+        sb.AppendLine($"cpu_usage_percent {cpuUsage}");
+        sb.AppendLine("# HELP ram_usage_mb RAM usage in MB");
+        sb.AppendLine("# TYPE ram_usage_mb gauge");
+        sb.AppendLine($"ram_usage_mb {ramUsageMB}");
+        sb.AppendLine("# HELP uptime_seconds Uptime in seconds");
+        sb.AppendLine("# TYPE uptime_seconds gauge");
+        sb.AppendLine($"uptime_seconds {uptime:F2}");
+
+        return Content(sb.ToString(), "text/plain");
+    }
+
 }
