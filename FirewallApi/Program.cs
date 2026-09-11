@@ -15,6 +15,7 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddOpenApi();
 
 var app = builder.Build();
+app.UseMiddleware<FirewallApi.Middlewares.ApiKeyMiddleware>();
 
 using (var scope = app.Services.CreateScope())
 {
