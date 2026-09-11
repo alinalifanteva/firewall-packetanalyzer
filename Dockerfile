@@ -9,7 +9,7 @@ RUN dotnet publish -c Release -o out
 FROM mcr.microsoft.com/dotnet/aspnet:10.0
 WORKDIR /app
 
-RUN apt-get update && apt-get install -y iptables
+RUN apt-get update && apt-get install -y iptables libgssapi-krb5-2
 
 COPY --from=build /app/out .
 

@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   db:
     image: postgres:16
@@ -13,9 +11,15 @@ services:
       - postgres_data:/var/lib/postgresql/data
     networks:
       - firewall-net
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
   api:
     build: .
+    image: firewall-packetanalyzer-api
     ports:
       - '5087:8080'
     cap_add:
@@ -24,7 +28,8 @@ services:
       - ASPNETCORE_ENVIRONMENT=Development
       - ConnectionStrings__DefaultConnection=Host=db;Port=5432;Database=firewalldb;Username=postgres;Password=postgres
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     networks:
       - firewall-net
 

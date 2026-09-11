@@ -19,7 +19,22 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    dbContext.Database.Migrate();
+    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+
+    for (int i = 0; i < 10; i++)
+    {
+        try
+        {
+            dbContext.Database.Migrate();
+            logger.LogInformation("Migrations applied successfully");
+            break;
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning($"Migration attempt {i + 1} failed: {ex.Message}");
+            Thread.Sleep(3000);
+        }
+    }
 }
 
 if (app.Environment.IsDevelopment())
