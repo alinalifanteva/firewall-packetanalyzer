@@ -65,6 +65,29 @@ docker run -d \
   -e ConnectionStrings__DefaultConnection="Host=host.docker.internal;Port=5433;Database=firewalldb;Username=postgres;Password=postgres" \
   firewall-api
 
+  ## 📊 Мониторинг (Prometheus + Grafana)
+
+Проект включает полноценный мониторинг:
+- **Prometheus** собирает метрики с эндпоинта `/metrics` каждые 15 секунд.
+- **Grafana** визуализирует их на дашборде `Firewall Dashboard`.
+
+### Метрики
+| Метрика | Описание |
+|---------|----------|
+| `total_rules` | Общее количество правил |
+| `allow_rules` | Количество ALLOW-правил |
+| `deny_rules` | Количество DENY-правил |
+| `cpu_usage_percent` | Загрузка CPU (%) |
+| `ram_usage_mb` | Потребление RAM (МБ) |
+| `uptime_seconds` | Время работы приложения (сек) |
+
+### Скриншот дашборда
+![Grafana Dashboard](docs/grafana-dashboard.png)
+
+### Как открыть
+- Prometheus: http://localhost:9090
+- Grafana: http://localhost:3001 (admin / admin)
+
 ## 🚀 Дорожная карта
 - [ ] JWT / OAuth2 авторизация (вместо API Key)
 - [ ] Полный анализ пакетов через NFQueue (pcap, deep packet inspection)
